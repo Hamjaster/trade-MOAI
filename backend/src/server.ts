@@ -3,7 +3,6 @@ import express, { type Express } from "express";
 import helmet from "helmet";
 import { pino } from "pino";
 import userRoutes from "./api/routes/user.route.js";
-import paymentRoutes from "./api/routes/payment.route.js";
 import tradeRoutes from "./api/routes/trade.route.js";
 import errorHandler from "./common/middleware/errorHandler.js";
 
@@ -23,7 +22,6 @@ app.use(helmet());
 // Routes
 app.use("/user", userRoutes);
 app.use("/trades", tradeRoutes);
-app.use("/payment", paymentRoutes);
 
 app.get('/', (req, res) => {
     res.send('Hello World!')
