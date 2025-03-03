@@ -44,70 +44,76 @@ const normalizeSchwabData = (csvData: any[]) => {
 };
 
 
-// Upload and process CSV file
-export const uploadCSVBulk =async (req : any, res : any) => {
-    
+import csvParser from "csv-parser";
+import { Readable } from "stream";
+import { unlink } from "fs/promises";
+
+export const uploadCSVBulk = async (req: any, res: any) => {
   const userId = req.user._id;
-  console.log(userId, 'USER ID')
+  console.log(userId, "USER ID");
   try {
     // Validate user
     const user = await User.findById(userId);
     if (!user) return res.status(404).json({ message: "User not found" });
 
-    // Parse the CSV file
+    // Parse the CSV buffer
     const trades: any[] = [];
-    const filePath = req.file.path;
-    const tempFilePath = `${filePath}.tmp`;
+    console.log(req.file, "REQ FROM MULTER");
 
-    // Step 1: Remove the first row (header or unnecessary row)
-    const rl = readline.createInterface({
-      input: fs.createReadStream(filePath),
-      output: fs.createWriteStream(tempFilePath),
-      terminal: false,
-    });
+    if (!req.file || !req.file.buffer) {
+      return res.status(400).json({ message: "No file uploaded" });
+    }
+    // Convert buffer to string and split into lines
+    const csvString = req.file.buffer.toString("utf-8");
+    const csvLines = csvString.split("\n");
 
-    let isFirstRow = true;
-    rl.on("line", (line) => {
-      if (!isFirstRow) {
-        rl.output.write(`${line}\n`);
-      }
-      isFirstRow = false;
-    });
+    if (csvLines.length <= 1) {
+      return res.status(400).json({ message: "CSV file is empty or has no data rows" });
+    }
 
-    await new Promise((resolve) => rl.on("close", resolve));
+    // Remove the first row (header)
+    const csvDataWithoutHeader = csvLines.slice(1).join("\n");
 
-    fs.createReadStream(tempFilePath)
+    const stream = Readable.from(csvDataWithoutHeader);
+
+    
+    stream
       .pipe(csvParser())
-      .on("data", (row) => {trades.push(row)})
+      .on("data", (row) => {
+      
+          trades.push(row);
+     
+      })
       .on("end", async () => {
         // Normalize the trades (assuming Schwab broker data)
-        console.log(trades, "Trades to pass in")
-        const normalizedTrades = normalizeSchwabData(trades).map((trade) => (
-  {
-          user: userId,
-          ...trade,
-        }
-      )).filter((trade) => trade !== undefined);
-        console.log(normalizedTrades, "NORMALIZED TRADES")
+        console.log(trades, "Trades to pass in");
+        const normalizedTrades = normalizeSchwabData(trades)
+          .map((trade) => ({
+            user: userId,
+            ...trade,
+          }))
+          .filter((trade) => trade !== undefined);
+
+        console.log(normalizedTrades, "NORMALIZED TRADES");
         // Save to the database
-     await Trade.insertMany(normalizedTrades);
+        await Trade.insertMany(normalizedTrades);
         const result = await Trade.find({ user: userId });
-      console.log(result)
-  // Cleanup temporary files
-  await unlinkAsync(filePath);
-  await unlinkAsync(tempFilePath);
+        console.log(result);
+
         res.status(201).json({
           message: "Trades uploaded and normalized successfully",
           data: result,
         });
+      })
+      .on("error", (error) => {
+        console.error(error);
+        res.status(500).json({ message: "Error processing CSV file" });
       });
-
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Internal server error" });
   }
-
-}
+};
 
 
 export const getTrades = async (req :any, res :any) => {

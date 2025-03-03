@@ -6,8 +6,11 @@ import { verifyUser } from '../../common/middleware/auth.middleware.js';
 import { getTradeAnalytics, getTradesPerMonth, getTradesPerDay, getWinRatePercentage } from '../controllers/trade.controller.js';
 
 const router = express.Router();
-// Multer configuration
-const upload = multer({ dest: "uploads/" });
+
+
+const storage = multer.memoryStorage();
+
+const upload = multer({ storage });
 
 // Define Routes
 router.post("/upload-bulk", verifyUser, upload.single("file"), uploadCSVBulk);
