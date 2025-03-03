@@ -6,7 +6,6 @@ import userRoutes from "@/api/routes/user.route";
 import paymentRoutes from "@/api/routes/payment.route";
 import tradeRoutes from "@/api/routes/trade.route";
 import errorHandler from "@/common/middleware/errorHandler";
-import rateLimiter from "@/common/middleware/rateLimiter";
 
 const logger = pino({ name: "server start" });
 const app: Express = express();
