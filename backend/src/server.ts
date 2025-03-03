@@ -25,6 +25,10 @@ app.use("/user", userRoutes);
 app.use("/trades", tradeRoutes);
 app.use("/payment", paymentRoutes);
 
+app.get('/', (req, res) => {
+    res.send('Hello World!')
+})
+
 // Swagger UI
 // app.use(openAPIRouter);
 
