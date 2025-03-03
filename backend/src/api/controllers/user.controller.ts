@@ -4,9 +4,9 @@ import {
   hashPassword,
   sendEmail,
   verifyPassword,
-} from "@/common/utils/services";
-import User, { UserDocument } from "../models/user.model";
-import userModel from "../models/user.model";
+} from "../../common/utils/services.js";
+import User, { UserDocument } from "../models/user.model.js";
+import userModel from "../models/user.model.js";
 
 // Register Controller
 export const register = async (req : any, res : any) => {

@@ -1,5 +1,5 @@
 import express from 'express'
-import { continueWithGoogle, login, register, resendCode, verifyCode } from '../controllers/user.controller';
+import { continueWithGoogle, login, register, resendCode, verifyCode } from '../controllers/user.controller.js';
 const router = express.Router();
 
 // Define Routes

@@ -1,9 +1,9 @@
 import express from 'express'
-import { continueWithGoogle, login, register, resendCode, verifyCode } from '../controllers/user.controller';
-import {  getHistoricalData, getTrades, getTradesSummary, saveJournalEntry, uploadCSVBulk } from '../controllers/trade.controller';
+
+import {  getHistoricalData, getTrades, getTradesSummary, saveJournalEntry, uploadCSVBulk } from '../controllers/trade.controller.js';
 import multer from "multer";
-import { verifyUser } from '@/common/middleware/auth.middleware';
-import { getTradeAnalytics, getTradesPerMonth, getTradesPerDay, getWinRatePercentage } from '../controllers/trade.controller';
+import { verifyUser } from '../../common/middleware/auth.middleware.js';
+import { getTradeAnalytics, getTradesPerMonth, getTradesPerDay, getWinRatePercentage } from '../controllers/trade.controller.js';
 
 const router = express.Router();
 // Multer configuration

@@ -1,6 +1,6 @@
 
-import { app, logger } from "@/server";
-import { Config } from "./common/utils/envConfig";
+import { app, logger } from "./server.js";
+import { Config } from "./common/utils/envConfig.js";
 import mongoose from "mongoose";
 
 const server = app.listen(Config.PORT, () => {

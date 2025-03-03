@@ -1,11 +1,11 @@
 import csvParser from "csv-parser";
 import fs from "fs";
-import User from "../models/user.model";
-import { ITrade, Trade } from "../models/trade.model";
+import User from "../models/user.model.js";
+import { ITrade, Trade } from "../models/trade.model.js";
 import { promisify } from "util"
 import readline from "readline"
 import axios from 'axios'
-import { fixDatasetErrors, getMonthsBetweenDates, parseDate } from "@/common/utils/services";
+import { fixDatasetErrors, getMonthsBetweenDates, parseDate } from "../../common/utils/services.js";
 const unlinkAsync = promisify(fs.unlink);
 import moment from 'moment';
 import 'moment-timezone';

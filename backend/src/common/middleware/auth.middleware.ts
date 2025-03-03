@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import { Config } from "../utils/envConfig";
-import User from "@/api/models/user.model";
+import User from "../../api/models/user.model.js";
 
 export const verifyUser =async (
   req: any,

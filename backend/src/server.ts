@@ -2,10 +2,10 @@ import cors from "cors";
 import express, { type Express } from "express";
 import helmet from "helmet";
 import { pino } from "pino";
-import userRoutes from "@/api/routes/user.route";
-import paymentRoutes from "@/api/routes/payment.route";
-import tradeRoutes from "@/api/routes/trade.route";
-import errorHandler from "@/common/middleware/errorHandler";
+import userRoutes from "./api/routes/user.route.js";
+import paymentRoutes from "./api/routes/payment.route.js";
+import tradeRoutes from "./api/routes/trade.route.js";
+import errorHandler from "./common/middleware/errorHandler.js";
 
 const logger = pino({ name: "server start" });
 const app: Express = express();

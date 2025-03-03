@@ -2,7 +2,7 @@ import nodemailer from "nodemailer";
 import bcrypt from "bcryptjs";
 import moment, { Moment } from "moment";
 import jwt from "jsonwebtoken";
-import { Config } from "./envConfig";
+import { Config } from "./envConfig.js";
 
 const transport = nodemailer.createTransport(Config.EMAIL_CONFIG);
 
