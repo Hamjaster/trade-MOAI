@@ -4,7 +4,7 @@ dotenv.config();
 
 export const Config = {
   MONGODB : {
-    url : 'mongodb://127.0.0.1:27017/trading-dashboard',
+    url : process.env.NODE_ENV === "development" ?  'mongodb://127.0.0.1:27017/trading-dashboard' : "mongodb+srv://hamzashahdev:hamzashahdev@cluster0.tvu8y.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0",
     options: {
       useNewUrlParser: true,
       useUnifiedTopology: true,
