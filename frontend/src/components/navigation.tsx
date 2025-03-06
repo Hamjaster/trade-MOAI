@@ -1,3 +1,5 @@
+import { Link } from "react-router-dom";
+
 const navItems = [
   { label: "HOME", href: "/" },
   { label: "About Trade MOAI", href: "/about" },
@@ -15,13 +17,13 @@ export function Navigation() {
         <div className="flex justify-between h-16">
           <div className="flex space-x-8">
             {navItems.map((item) => (
-              <a
+              <Link
                 key={item.href}
-                href={item.href}
+                to={item.href}
                 className="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-900 hover:text-blue-600"
               >
                 {item.label}
-              </a>
+              </Link>
             ))}
           </div>
         </div>
