@@ -20,6 +20,7 @@ export function JournalPage() {
 
   const [error, setError] = useState("");
   const dispatch = useAppDispatch();
+  const [isFetchLoading, setIsFetchLoading] = useState(false);
 
   // let historicalData = [
   //   {
@@ -76,6 +77,7 @@ export function JournalPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
+        setIsFetchLoading(true);
         if (!tradeToJournal) return;
 
         let from = new Date(tradeToJournal.openedDate);
@@ -92,8 +94,11 @@ export function JournalPage() {
             to: formatDateForAPI(to),
           })
         );
+        console.log("got data");
+        setIsFetchLoading(false);
       } catch (err) {
         setError("Failed to load trade data");
+        setIsFetchLoading(false);
       }
     };
 
@@ -129,15 +134,21 @@ export function JournalPage() {
         {new Date(tradeToJournal.closedDate).toLocaleDateString()}
       </h1>
 
-      {tradeToJournal.historicalData[0] ? (
-        <div className="bg-white rounded-lg shadow-lg p-4">
-          <TradeChart
-            data={tradeToJournal.historicalData}
-            trades={[tradeToJournal]}
-          />
-        </div>
+      {!isFetchLoading ? (
+        tradeToJournal.historicalData[0] ? (
+          <div className="bg-white rounded-lg shadow-lg p-4">
+            <TradeChart
+              data={tradeToJournal.historicalData}
+              trades={[tradeToJournal]}
+            />
+          </div>
+        ) : (
+          <></>
+        )
       ) : (
-        <>Couldn't get chart data for that trade</>
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="h-8 w-8 animate-spin" />
+        </div>
       )}
 
       <JournalEntryForm trade={tradeToJournal} onSubmit={handleJournalSubmit} />

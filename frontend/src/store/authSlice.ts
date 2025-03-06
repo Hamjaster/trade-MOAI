@@ -15,7 +15,7 @@ export const registerUser = createAsyncThunk(
   'auth/registerUser',
   async (formData, { rejectWithValue }) => {
     try {
-        console.log(formData, 'formDAta')
+        console.log(import.meta.env.VITE_ENV, 'env variable')
         const response = await axiosInstance.post(`/user/register`, formData)
       console.log(response, 'response')
       if(response.data.success === false){
