@@ -1,7 +1,17 @@
-import { useEffect, useRef } from "react";
-import { createChart, ColorType, type UTCTimestamp } from "lightweight-charts";
+import { useEffect, useRef, useState } from "react";
+import {
+  createChart,
+  ColorType,
+  type UTCTimestamp,
+  Time,
+} from "lightweight-charts";
 import { ITrade } from "@/store/tradeSlice";
-
+import { DateTime } from "luxon";
+import {
+  BackgroundShadeSeries,
+  SessionHighlighting,
+} from "@/components/ui/ChartBGPlugin/session-highlighting";
+import { getDate } from "date-fns";
 interface TradeChartProps {
   data: {
     time: UTCTimestamp;
@@ -15,6 +25,8 @@ interface TradeChartProps {
 
 export function TradeChart({ data, trades }: TradeChartProps) {
   const chartContainerRef = useRef<HTMLDivElement>(null);
+  const chartRef = useRef<any>(null);
+  const [timezone, setTimezone] = useState<"EST" | "local">("EST");
 
   useEffect(() => {
     if (!chartContainerRef.current || !data.length) return;
@@ -38,13 +50,17 @@ export function TradeChart({ data, trades }: TradeChartProps) {
       },
     });
 
+    chartRef.current = chart;
+
     const candlestickSeries = chart.addCandlestickSeries();
     candlestickSeries.setData(data);
 
     // Add markers for trades
 
     const markers = trades.flatMap((trade) => {
-      const openedDate = new Date(trade.openedDate);
+      const openedDate = new Date(
+        new Date(trade.openedDate).getTime() + 40 * 60 * 1000
+      );
       const closedDate = new Date(trade.closedDate);
       const isSameDay = openedDate.toDateString() === closedDate.toDateString();
 
@@ -53,12 +69,14 @@ export function TradeChart({ data, trades }: TradeChartProps) {
 
       if (isSameDay) {
         const dayStart =
-          new Date(openedDate.setHours(0, 0, 0, 0)).getTime() / 1000;
+          new Date(openedDate.setHours(15, 0, 0, 0)).getTime() / 1000;
         const dayEnd =
           new Date(closedDate.setHours(23, 59, 59, 999)).getTime() / 1000;
         entryTime = dayStart as UTCTimestamp;
         exitTime = dayEnd as UTCTimestamp;
       }
+      console.log(entryTime, "ENTRY UTC");
+
       return [
         {
           time: entryTime,
@@ -68,6 +86,7 @@ export function TradeChart({ data, trades }: TradeChartProps) {
           shape: trade.action === "CALL" ? "arrowUp" : "arrowDown",
           text: `${trade.action} Entry @ ${trade.entryPrice}`,
         },
+
         {
           time: exitTime,
           close: trade.exitPrice,
@@ -95,5 +114,34 @@ export function TradeChart({ data, trades }: TradeChartProps) {
     };
   }, [data, trades]);
 
-  return <div ref={chartContainerRef} className="w-full" />;
+  useEffect(() => {
+    if (!chartRef.current) return;
+
+    chartRef.current.applyOptions({
+      timeScale: {
+        tickFormatter: (time: number) => {
+          const date = DateTime.fromSeconds(time).setZone(
+            timezone === "EST" ? "America/New_York" : "local"
+          );
+          return date.toFormat("HH:mm");
+        },
+      },
+    });
+  }, [timezone]);
+
+  return (
+    <div className="w-full">
+      {/* <div className="p-2">
+        <button
+          onClick={() =>
+            setTimezone((prev) => (prev === "EST" ? "local" : "EST"))
+          }
+          className="px-4 py-2 bg-blue-500 text-white rounded"
+        >
+          Switch to {timezone === "EST" ? "Local Time" : "EST"}
+        </button>
+      </div> */}
+      <div ref={chartContainerRef} className="w-full h-[400px]" />
+    </div>
+  );
 }

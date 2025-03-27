@@ -5,6 +5,7 @@ import axiosInstance from '@/lib/axios';
 type initialState = {
     user : null | any;
     token : string | null;
+    tokenExpiry : number | null;
     isLoading : boolean;
     isLoadingGoogle : boolean;
     error : string | null;
@@ -96,6 +97,7 @@ const authSlice = createSlice({
   initialState: {
     user: null,
     token: localStorage.getItem('user_token') || null,
+    tokenExpiry: localStorage.getItem('tokenExpiry') || null,
     isLoading: false,
     error: null,
     success : null,
@@ -106,6 +108,7 @@ const authSlice = createSlice({
       state.user = null;
       state.token = null;
       localStorage.removeItem('user_token');
+      localStorage.removeItem('tokenExpiry');
     },
     setToken :(state, action) => {
       state.token = action.payload
@@ -138,12 +141,13 @@ const authSlice = createSlice({
       .addCase(googleContinue.fulfilled, (state, action) => {
         state.user = action.payload.user;
         state.token = action.payload.token
+        state.tokenExpiry = action.payload.tokenExpiry
         state.success = 'User registered'
         localStorage.setItem("user_token", action.payload.token)
+        localStorage.setItem("tokenExpiry", action.payload.tokenExpiry)
         state.isLoadingGoogle = false
       })
       .addCase(googleContinue.rejected, (state, action) => {
-       
         state.error = action.payload as string;
         state.isLoadingGoogle = false
         state.success = null
@@ -158,8 +162,10 @@ const authSlice = createSlice({
         console.log(action.payload, 'action.payload')
         state.user = action.payload.user;
         state.token = action.payload.token
+        state.tokenExpiry = action.payload.tokenExpiry
         state.success = "User Verified"
         localStorage.setItem("user_token", action.payload.token)
+        localStorage.setItem("tokenExpiry", action.payload.tokenExpiry)
       })
       .addCase(verifyUserCode.rejected, (state, action) => {
         state.isLoading = false;
@@ -174,9 +180,11 @@ const authSlice = createSlice({
       .addCase(loginUser.fulfilled, (state, action) => {
         state.isLoading = false;
         state.token = action.payload.token;
+        state.tokenExpiry = action.payload.tokenExpiry;
         state.user = action.payload.user
         state.success = "Login successfull"
         localStorage.setItem('user_token', action.payload.token);
+        localStorage.setItem('tokenExpiry', action.payload.tokenExpiry);
     })
     .addCase(loginUser.rejected, (state, action) => {
         state.isLoading = false;

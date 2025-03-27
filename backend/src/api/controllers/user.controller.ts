@@ -1,3 +1,4 @@
+import moment from "moment";
 import {
   generateCode,
   generateToken,
@@ -70,7 +71,7 @@ export const verifyCode = async (req : any, res : any) => {
     user.verificationExpires = undefined;
     await user.save();
 
-    res.status(200).json({ success: true, message: "User verified successfully.", data: {user, token : await generateToken(user._id)} });
+    res.status(200).json({ success: true, message: "User verified successfully.", data: {user, token : await generateToken(user._id), tokenExpiry : moment().add(25, "hours").unix()} });
   } catch (error) {
     res.status(500).json({ success: false, message: "Internal server error", data: error });
   }
@@ -120,7 +121,7 @@ export const login = async (req : any, res : any) => {
 
     const token = await generateToken(user._id);
 
-    res.status(200).json({ success: true, message: "Login successful.", data: { user, token } });
+    res.status(200).json({ success: true, message: "Login successful.", data: { user, token, tokenExpiry : moment().add(25, "hours").unix() } });
   } catch (error) {
     res.status(500).json({ success: false, message: "Internal server error", data: error });
   }
@@ -136,7 +137,8 @@ export const continueWithGoogle = async (req :any, res : any) => {
         success : true,
         data : {
           user,
-          token : await generateToken(user._id)
+          token : await generateToken(user._id),
+          tokenExpiry : moment().add(25, "hours").unix()
         }
       })
   } else {
@@ -152,7 +154,8 @@ export const continueWithGoogle = async (req :any, res : any) => {
         success : true,
         data : {
           user,
-          token : await generateToken(user._id)
+          token : await generateToken(user._id),
+          tokenExpiry : moment().add(25, "hours").unix()
         }
       })
   }

@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import "./App.css";
 import { Route, Routes, useNavigate } from "react-router-dom";
 import { Provider, useSelector } from "react-redux";
-import store, { RootState } from "./store";
+import store, { RootState, useAppDispatch } from "./store";
 import SplashPage from "./pages/SplashPage";
 import DashboardPage from "./pages/Dashboard/Dashboard";
 import VerifyPage from "./pages/VerifyEmail";
@@ -13,16 +13,35 @@ import DashboardLayout from "./pages/Dashboard/DashboardLayout";
 import CalendarPage from "./pages/Dashboard/Calendar";
 import UploadTradesPage from "./pages/Dashboard/Upload";
 import { JournalPage } from "./pages/Dashboard/Journal";
-
+import jwt from "jsonwebtoken";
+import moment from "moment";
 function ProtectedRoute({ children }: { children: JSX.Element }) {
   const navigate = useNavigate();
-  const token = useSelector((state: RootState) => state.auth.token);
+  const { token, tokenExpiry } = useSelector((state: RootState) => state.auth);
+  const dispatch = useAppDispatch();
 
   useEffect(() => {
-    if (!token) {
-      navigate("/login");
+    if (token) {
+      try {
+        const now = Math.floor(Date.now() / 1000); // Current time in UNIX format
+
+        if (tokenExpiry && now >= Number(tokenExpiry)) {
+          console.log("Token expired, logging out...");
+          localStorage.removeItem("user_token");
+          navigate("/login"); // Redirect to login
+        } else {
+          console.log("User found in local storage, token valid");
+          // dispatch(setToken(token));
+          navigate("/dashboard");
+        }
+      } catch (error) {
+        console.error(error);
+        console.log("Invalid token format, removing...");
+        localStorage.removeItem("user_token");
+        navigate("/login");
+      }
     }
-  }, [token, navigate]);
+  }, [dispatch]);
 
   return token ? children : null;
 }

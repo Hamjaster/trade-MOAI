@@ -77,7 +77,7 @@ export const uploadTrades = createAsyncThunk(
       if (response.data.success === false) {
         return rejectWithValue(response.data.message);
       }
-      return response.data.data;
+      return response.data;
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || error.message);
     }
@@ -234,8 +234,8 @@ const tradeSlice = createSlice({
       .addCase(uploadTrades.fulfilled, (state, action) => {
         state.isLoading = false;
         console.log(action.payload, 'pushing new TRADESs')
-        state.trades.push(action.payload) 
-        state.success = 'Trades uploaded successfully';
+        state.trades.push(action.payload.data) 
+        state.success = action.payload.message;
       })
       .addCase(uploadTrades.rejected, (state, action) => {
         state.isLoading = false;

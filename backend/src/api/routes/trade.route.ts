@@ -1,6 +1,6 @@
 import express from 'express'
 
-import {  getHistoricalData, getTrades, getTradesSummary, saveJournalEntry, uploadCSVBulk } from '../controllers/trade.controller.js';
+import {  getHistoricalData, getStats, getTrades, getTradesSummary, saveJournalEntry, uploadCSVBulk } from '../controllers/trade.controller.js';
 import multer from "multer";
 import { verifyUser } from '../../common/middleware/auth.middleware.js';
 import { getTradeAnalytics, getTradesPerMonth, getTradesPerDay, getWinRatePercentage } from '../controllers/trade.controller.js';
@@ -17,6 +17,7 @@ router.post("/upload-bulk", verifyUser, upload.single("file"), uploadCSVBulk);
 router.get("/get",verifyUser, getTrades);
 router.post("/journal/:id",verifyUser, saveJournalEntry);
 router.post("/getHistoricData",verifyUser, getHistoricalData);
+router.post("/getStats",verifyUser, getStats);
 
 // Route to get overall analytics
 router.get('/analytics', getTradeAnalytics);

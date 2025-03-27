@@ -54,8 +54,9 @@ export default function UploadTradesPage() {
     if (!file) return alert("Please select a file first");
     dispatch(uploadTrades(file))
       .unwrap()
-      .then(() => {
-        toast.success("Trades uploaded successfully");
+      .then((res) => {
+        console.log(res, "message!");
+        toast.success(res.message);
         dispatch(getTrades());
         setIsDialogOpen(false);
       });

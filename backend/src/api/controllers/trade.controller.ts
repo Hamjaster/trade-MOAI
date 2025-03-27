@@ -76,17 +76,13 @@ export const uploadCSVBulk = async (req: any, res: any) => {
 
     const stream = Readable.from(csvDataWithoutHeader);
 
-    
     stream
       .pipe(csvParser())
       .on("data", (row) => {
-      
-          trades.push(row);
-     
+        trades.push(row);
       })
       .on("end", async () => {
-        // Normalize the trades (assuming Schwab broker data)
-        console.log(trades, "Trades to pass in");
+        // Normalize the trades
         const normalizedTrades = normalizeSchwabData(trades)
           .map((trade) => ({
             user: userId,
@@ -95,13 +91,41 @@ export const uploadCSVBulk = async (req: any, res: any) => {
           .filter((trade) => trade !== undefined);
 
         console.log(normalizedTrades, "NORMALIZED TRADES");
-        // Save to the database
-        await Trade.insertMany(normalizedTrades);
+        
+        // Get existing trades for the user
+        const existingTrades = await Trade.find({ user: userId });
+        
+        // Filter out duplicates
+        const uniqueTrades = normalizedTrades.filter(newTrade => {
+          return !existingTrades.some(existingTrade => {
+            return (
+              newTrade?.closedDate?.getTime() === existingTrade.closedDate.getTime() &&
+              newTrade?.openedDate?.getTime() === existingTrade.openedDate.getTime() &&
+              newTrade.ticker === existingTrade.ticker &&
+              newTrade.action === existingTrade.action &&
+              newTrade.quantity === existingTrade.quantity &&
+              newTrade.entryPrice === existingTrade.entryPrice &&
+              newTrade.exitPrice === existingTrade.exitPrice &&
+              newTrade.positionSize === existingTrade.positionSize &&
+              newTrade.exitValue === existingTrade.exitValue &&
+              newTrade.netProfitLoss === existingTrade.netProfitLoss &&
+              newTrade.profitLossPercentage === existingTrade.profitLossPercentage
+            );
+          });
+        });
+
+        console.log(`Found ${normalizedTrades.length - uniqueTrades.length} duplicates, inserting ${uniqueTrades.length} new trades`);
+
+        // Save only unique trades to the database
+        if (uniqueTrades.length > 0) {
+          await Trade.insertMany(uniqueTrades);
+        }
+        
         const result = await Trade.find({ user: userId });
         console.log(result);
 
         res.status(201).json({
-          message: "Trades uploaded and normalized successfully",
+          message: `Trades processed successfully. ${uniqueTrades.length} new trades added, ${normalizedTrades.length - uniqueTrades.length} duplicates skipped.`,
           data: result,
         });
       })
@@ -444,3 +468,92 @@ export const getHistoricalData = async (req: any, res: any) => {
     });
   }
 };
+
+const getYTDTrades = async (userId : string): Promise<ITrade[]> => {
+  const startOfYear = moment().startOf("year").toDate();
+  return await Trade.find({ closedDate: { $gte: startOfYear }, user : userId });
+};
+
+export const getStats = async (req : any, res : any) => {
+  try {
+    const userId = req.user._id;
+    const YTDtrades = await getYTDTrades(userId);
+    console.log(YTDtrades, "YTD TRADES");
+    const trades = await Trade.find({ user: userId });
+
+    // 1. Trades per Day
+    const tradesPerDay: { day: string; trades: number }[] = [];
+    const dayCount: { [key: string]: number } = {};
+    trades.forEach((trade) => {
+      const day = moment(trade.closedDate).format("dddd");
+      dayCount[day] = (dayCount[day] || 0) + 1;
+    });
+    for (const day in dayCount) {
+      tradesPerDay.push({ day, trades: dayCount[day] });
+    }
+
+    // 2. Total Profit Loss YTD
+    const totalProfitLossYTD = YTDtrades.reduce(
+      (sum, trade) => sum + trade.netProfitLoss,
+      0
+    );
+
+    // 3. Trades YTD
+    const tradesYTD = YTDtrades.length;
+
+    // 4. Swing Trades (held more than 1 day)
+    const swingTrades = trades.filter(
+      (trade) =>
+        moment(trade.closedDate).diff(moment(trade.openedDate), "days") > 1
+    ).length;
+
+    // 5. Oversized Trades (position size > 10000)
+    const oversizedTrades = trades.filter(
+      (trade) => trade.positionSize > 10000
+    ).length;
+
+    // 6. Average Win Rate (Percentage of winning trades)
+    const winningTrades = trades.filter((trade) => trade.netProfitLoss > 0)
+      .length;
+    const averageWinRate =
+      trades.length > 0 ? (winningTrades / trades.length) * 100 : 0;
+
+    // 7. Profit YTD
+    const profitYTD = YTDtrades
+      .filter((trade) => trade.netProfitLoss > 0)
+      .reduce((sum, trade) => sum + trade.netProfitLoss, 0);
+
+    // 8. Profit and Loss YTD (for line chart)
+    const profitLossYTDData: { date: string; profitLoss: number }[] = [];
+    const dailyProfitLoss: { [key: string]: number } = {};
+    YTDtrades.forEach((trade) => {
+      const date = moment(trade.closedDate).format("YYYY-MM-DD");
+      dailyProfitLoss[date] =
+        (dailyProfitLoss[date] || 0) + trade.netProfitLoss;
+    });
+    for (const date in dailyProfitLoss) {
+      profitLossYTDData.push({ date, profitLoss: dailyProfitLoss[date] });
+    }
+
+    // 9. Max Loss Broken (trades with loss > $5000)
+    const maxLossBroken = trades.filter(
+      (trade) => trade.netProfitLoss < -5000
+    ).length;
+
+    // Send response
+    res.json({
+      tradesPerDay,
+      totalProfitLossYTD,
+      tradesYTD,
+      swingTrades,
+      oversizedTrades,
+      averageWinRate: averageWinRate.toFixed(2) + "%",
+      profitYTD,
+      profitLossYTDData,
+      maxLossBroken,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Server Error" });
+  }
+}
